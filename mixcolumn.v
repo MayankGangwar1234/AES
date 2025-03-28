@@ -1,8 +1,8 @@
 module mixcolumns (
-    input [127:0] state_in,  // Row-major order: b0,b1,b2,b3,b4,...,b15
+    input [127:0] state_in,  
     output [127:0] state_out
 );
-    // GF multiplication functions (unchanged)
+    // GF multiplication functions 
     function [7:0] gf_mul2;
         input [7:0] b;
         begin
@@ -21,11 +21,11 @@ module mixcolumns (
     genvar i;
     generate
         for (i = 0; i < 4; i = i + 1) begin : mix_column
-            // Extract column i (row-major to column-major mapping)
-            wire [7:0] b0 = state_in[127-32*i -: 8];  // Row 0, Column i
-            wire [7:0] b1 = state_in[127-32*i-8 -: 8]; // Row 1, Column i
-            wire [7:0] b2 = state_in[127-32*i-16 -: 8]; // Row 2, Column i
-            wire [7:0] b3 = state_in[127-32*i-24 -: 8]; // Row 3, Column i
+            // Extract column i 
+            wire [7:0] b0 = state_in[127-32*i -: 8];  
+            wire [7:0] b1 = state_in[127-32*i-8 -: 8]; 
+            wire [7:0] b2 = state_in[127-32*i-16 -: 8]; 
+            wire [7:0] b3 = state_in[127-32*i-24 -: 8]; 
             
             // MixColumns transformation
             wire [7:0] new_b0 = gf_mul2(b0) ^ gf_mul3(b1) ^ b2 ^ b3;
