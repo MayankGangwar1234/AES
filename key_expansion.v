@@ -25,7 +25,7 @@ module key_expansion(input[127:0] key, input [3:0] round, output reg [127:0] op_
   // Round 1
   wire [31:0] g_1;
   g a(.w(w3), .round(4'd1), .g_op(g_1));
-  reg [31:0] w4,w5,w6,w7;
+  wire [31:0] w4,w5,w6,w7;
   assign w4 = w0 ^ g_1;
   assign w5 = w4 ^ w1;
   assign w6 = w5 ^ w2;
@@ -34,7 +34,7 @@ module key_expansion(input[127:0] key, input [3:0] round, output reg [127:0] op_
   // Round 2
   wire [31:0] g_2;
   g b(.w(w7), .round(4'd2), .g_op(g_2));
-  reg [31:0] w8,w9,w10,w11;
+  wire [31:0] w8,w9,w10,w11;
   assign w8 = w4 ^ g_2;
   assign w9 = w8 ^ w5;
   assign w10 = w9 ^ w6;
@@ -43,7 +43,7 @@ module key_expansion(input[127:0] key, input [3:0] round, output reg [127:0] op_
   // Round 3
   wire [31:0] g_3;
   g c(.w(w11), .round(4'd3), .g_op(g_3));
-  reg [31:0] w12,w13,w14,w15;
+  wire [31:0] w12,w13,w14,w15;
   assign w12 = w8 ^ g_3;
   assign w13 = w12 ^ w9;
   assign w14 = w13 ^ w10;
