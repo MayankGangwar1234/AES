@@ -444,17 +444,6 @@ module add_round_key(input[127:0] state_in,input[127:0] key,output [127:0] state
   assign state_out=state_in^key;
 endmodule
 
-
-
-
-
-
-
-
-
-
-
-
 module main_module_decrypt(
     input [127:0] ciphertext,
     input [127:0] key,
@@ -495,7 +484,7 @@ module main_module_decrypt(
             
             // AddRoundKey
             
-          add_round_key ark0(
+          add_round_key ark2(
             .state_in(inv_subbed),
             .key(round_keys[10-i]),
             .state_out(mixed)
