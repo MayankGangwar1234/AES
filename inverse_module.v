@@ -1,3 +1,77 @@
+module inv_mix_columns (
+    input [127:0] state_in,  
+    output [127:0] state_out
+);
+    // First define the basic multiply by 2 (xtime) function
+    function [7:0] gf_mul2;
+        input [7:0] b;
+        begin
+            gf_mul2 = {b[6:0], 1'b0} ^ (8'h1b & {8{b[7]}});
+        end
+    endfunction
+
+    // Then build the other multiplications using gf_mul2
+    function [7:0] gf_mul9;  // Multiply by 0x09 (x^3 + 1)
+        input [7:0] b;
+        reg [7:0] temp;
+        begin
+            temp = gf_mul2(gf_mul2(gf_mul2(b)));  // Multiply by 8 (three xtimes)
+            gf_mul9 = temp ^ b;                    // Then add original (8+1=9)
+        end
+    endfunction
+
+    function [7:0] gf_mulb;  // Multiply by 0x0B (x^3 + x + 1)
+        input [7:0] b;
+        reg [7:0] temp1, temp2;
+        begin
+            temp1 = gf_mul2(gf_mul2(gf_mul2(b)));  // Multiply by 8
+            temp2 = gf_mul2(b);                    // Multiply by 2
+            gf_mulb = temp1 ^ temp2 ^ b;            // 8 + 2 + 1 = 11 (0x0B)
+        end
+    endfunction
+
+    function [7:0] gf_muld;  // Multiply by 0x0D (x^3 + x^2 + 1)
+        input [7:0] b;
+        reg [7:0] temp1, temp2;
+        begin
+            temp1 = gf_mul2(gf_mul2(gf_mul2(b)));  // Multiply by 8
+            temp2 = gf_mul2(gf_mul2(b));           // Multiply by 4
+            gf_muld = temp1 ^ temp2 ^ b;           // 8 + 4 + 1 = 13 (0x0D)
+        end
+    endfunction
+
+    function [7:0] gf_mule;  // Multiply by 0x0E (x^3 + x^2 + x)
+        input [7:0] b;
+        reg [7:0] temp1, temp2, temp3;
+        begin
+            temp1 = gf_mul2(gf_mul2(gf_mul2(b)));  // Multiply by 8
+            temp2 = gf_mul2(gf_mul2(b));           // Multiply by 4
+            temp3 = gf_mul2(b);                    // Multiply by 2
+            gf_mule = temp1 ^ temp2 ^ temp3;       // 8 + 4 + 2 = 14 (0x0E)
+        end
+    endfunction
+
+    // Process each column (same as before)
+    genvar i;
+    generate
+        for (i = 0; i < 4; i = i + 1) begin : inv_mix_column
+            wire [7:0] b0 = state_in[127-32*i -: 8];  
+            wire [7:0] b1 = state_in[127-32*i-8 -: 8]; 
+            wire [7:0] b2 = state_in[127-32*i-16 -: 8]; 
+            wire [7:0] b3 = state_in[127-32*i-24 -: 8]; 
+            
+            wire [7:0] new_b0 = gf_mule(b0) ^ gf_mulb(b1) ^ gf_muld(b2) ^ gf_mul9(b3);
+            wire [7:0] new_b1 = gf_mul9(b0) ^ gf_mule(b1) ^ gf_mulb(b2) ^ gf_muld(b3);
+            wire [7:0] new_b2 = gf_muld(b0) ^ gf_mul9(b1) ^ gf_mule(b2) ^ gf_mulb(b3);
+            wire [7:0] new_b3 = gf_mulb(b0) ^ gf_muld(b1) ^ gf_mul9(b2) ^ gf_mule(b3);
+            
+            assign state_out[127-32*i -: 8] = new_b0;
+            assign state_out[127-32*i-8 -: 8] = new_b1;
+            assign state_out[127-32*i-16 -: 8] = new_b2;
+            assign state_out[127-32*i-24 -: 8] = new_b3;
+        end
+    endgenerate
+endmodule
 // Code your design here
 module aes_sbox (
     input wire [7:0] data_in,      // 8-bit input (16x16 = 256 possible values)
@@ -452,79 +526,4 @@ module inv_shift_rows(
 endmodule
 
 // Inverse MixColumns module
-module inv_mix_columns(
-    input [127:0] state_in,
-    output [127:0] state_out
-);
-    // GF multiplication functions
-    function [7:0] gf_mul2;
-        input [7:0] b;
-        begin
-            gf_mul2 = {b[6:0], 1'b0} ^ (8'h1b & {8{b[7]}});
-        end
-    endfunction
 
-    function [7:0] gf_mul4;
-        input [7:0] b;
-        begin
-            gf_mul4 = gf_mul2(gf_mul2(b));
-        end
-    endfunction
-
-    function [7:0] gf_mul8;
-        input [7:0] b;
-        begin
-            gf_mul8 = gf_mul2(gf_mul4(b));
-        end
-    endfunction
-
-    function [7:0] gf_mul9;
-        input [7:0] b;
-        begin
-            gf_mul9 = gf_mul8(b) ^ b;
-        end
-    endfunction
-
-    function [7:0] gf_mul11;
-        input [7:0] b;
-        begin
-            gf_mul11 = gf_mul8(b) ^ gf_mul2(b) ^ b;
-        end
-    endfunction
-
-    function [7:0] gf_mul13;
-        input [7:0] b;
-        begin
-            gf_mul13 = gf_mul8(b) ^ gf_mul4(b) ^ b;
-        end
-    endfunction
-
-    function [7:0] gf_mul14;
-        input [7:0] b;
-        begin
-            gf_mul14 = gf_mul8(b) ^ gf_mul4(b) ^ gf_mul2(b);
-        end
-    endfunction
-
-    // Process each column
-    genvar i;
-    generate
-        for (i = 0; i < 4; i = i + 1) begin : inv_mix_column
-            wire [7:0] b0 = state_in[127-32*i -: 8];
-            wire [7:0] b1 = state_in[127-32*i-8 -: 8];
-            wire [7:0] b2 = state_in[127-32*i-16 -: 8];
-            wire [7:0] b3 = state_in[127-32*i-24 -: 8];
-            
-            // Inverse MixColumns transformation
-            wire [7:0] new_b0 = gf_mul14(b0) ^ gf_mul11(b1) ^ gf_mul13(b2) ^ gf_mul9(b3);
-            wire [7:0] new_b1 = gf_mul9(b0) ^ gf_mul14(b1) ^ gf_mul11(b2) ^ gf_mul13(b3);
-            wire [7:0] new_b2 = gf_mul13(b0) ^ gf_mul9(b1) ^ gf_mul14(b2) ^ gf_mul11(b3);
-            wire [7:0] new_b3 = gf_mul11(b0) ^ gf_mul13(b1) ^ gf_mul9(b2) ^ gf_mul14(b3);
-            
-            assign state_out[127-32*i -: 8] = new_b0;
-            assign state_out[127-32*i-8 -: 8] = new_b1;
-            assign state_out[127-32*i-16 -: 8] = new_b2;
-            assign state_out[127-32*i-24 -: 8] = new_b3;
-        end
-    endgenerate
-endmodule
