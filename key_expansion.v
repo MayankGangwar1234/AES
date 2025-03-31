@@ -18,7 +18,7 @@ module g(input [31:0] w, input [3:0] round, output [31:0] g_op);
 endmodule
 
 
-module key_expansion(input[127:0] key, input [3:0] round, output reg [127:0] op_key);
+module key_expansion(input[127:0] key, output reg [127:0] op_key0,output reg [127:0] op_key1,output reg [127:0] op_key2,output reg [127:0] op_key3,output reg [127:0] op_key4,output reg [127:0] op_key5,output reg [127:0] op_key6,output reg [127:0] op_key7,output reg [127:0] op_key8,output reg [127:0] op_key9,output reg [127:0] op_key10);
   wire [31:0] w0,w1,w2,w3;
   assign {w0,w1,w2,w3} = key;
   
@@ -113,19 +113,19 @@ module key_expansion(input[127:0] key, input [3:0] round, output reg [127:0] op_
   assign w43 = w42 ^ w39;
   
   always @(*) begin
-    case (round)
-      4'd0 : op_key = {w0,w1,w2,w3};
-      4'd1 : op_key = {w4,w5,w6,w7};
-      4'd2 : op_key = {w8,w9,w10,w11};
-      4'd3 : op_key = {w12,w13,w14,w15};
-      4'd4 : op_key = {w16,w17,w18,w19};
-      4'd5 : op_key = {w20,w21,w22,w23};
-      4'd6 : op_key = {w24,w25,w26,w27};
-      4'd7 : op_key = {w28,w29,w30,w31};
-      4'd8 : op_key = {w32,w33,w34,w35};
-      4'd9 : op_key = {w36,w37,w38,w39};
-      4'd10: op_key = {w40,w41,w42,w43};
-      default: op_key = 128'b0;
-    endcase
+    
+      op_key0 = {w0,w1,w2,w3};
+      op_key1 = {w4,w5,w6,w7};
+      op_key2 = {w8,w9,w10,w11};
+      op_key3 = {w12,w13,w14,w15};
+      op_key4 = {w16,w17,w18,w19};
+      op_key5 = {w20,w21,w22,w23};
+      op_key6 = {w24,w25,w26,w27};
+      op_key7 = {w28,w29,w30,w31};
+      op_key8 = {w32,w33,w34,w35};
+      op_key9 = {w36,w37,w38,w39};
+      op_key10 = {w40,w41,w42,w43};
+      
+    
   end
 endmodule
