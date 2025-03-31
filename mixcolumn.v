@@ -33,7 +33,7 @@ module mixcolumns (
             wire [7:0] new_b2 = b0 ^ b1 ^ gf_mul2(b2) ^ gf_mul3(b3);
             wire [7:0] new_b3 = gf_mul3(b0) ^ b1 ^ b2 ^ gf_mul2(b3);
             
-            // Assign output (row-major order)
+            // Assign output (column-major order)
             assign state_out[127-32*i -: 8] = new_b0;
             assign state_out[127-32*i-8 -: 8] = new_b1;
             assign state_out[127-32*i-16 -: 8] = new_b2;
