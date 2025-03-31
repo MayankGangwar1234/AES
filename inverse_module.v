@@ -107,7 +107,7 @@ module invsb(
     genvar i;
     generate
         for (i = 0; i < 16; i = i + 1) begin : sub_bytes_loop
-          aes_sbox sbox_inv_inst (
+          aes_inv_sbox sbox_inv_inst (
                 .data_in(state_in[(i*8) +: 8]),
                 .data_out(sbox_inv_out[i])
             );
