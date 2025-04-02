@@ -328,10 +328,15 @@ module add_round_key(input[127:0] state_in,input[127:0] key,output [127:0] state
   //xor of expanded key with input state
   assign state_out=state_in^key;
 endmodule
+
+
  module cipher_text_generation(
     input [127:0] plaintext,
     input [127:0] key,
-     input clk,
+    input reset,
+    input clk,
+    input valid_in,
+    output reg valid_output,
     output reg [127:0] ciphertext
 );
     // Internal signals for round processing
@@ -349,6 +354,7 @@ endmodule
 
      reg [127:0] block2;
      reg [127:0] block3;
+     reg valid1,valid2,valid3;
     
     
          
@@ -361,22 +367,40 @@ endmodule
       .key(round_keys[0]),
         .state_out(state0)
     );
-   always @(posedge clk) begin
-    // Manually unroll the loop
-    round_keys1[0]  <= round_keys[0];
-    round_keys1[1]  <= round_keys[1];
-    round_keys1[2]  <= round_keys[2];
-    round_keys1[3]  <= round_keys[3];
-    round_keys1[4]  <= round_keys[4];
-    round_keys1[5]  <= round_keys[5];
-    round_keys1[6]  <= round_keys[6];
-    round_keys1[7]  <= round_keys[7];
-    round_keys1[8]  <= round_keys[8];
-    round_keys1[9]  <= round_keys[9];
-    round_keys1[10] <= round_keys[10];
-    
-    block1 <= state0;
-end
+     
+     always@(posedge clk) begin
+     if(reset) begin
+        round_keys1[0]<=128'b0;
+        round_keys1[1]<=128'b0;
+        round_keys1[2]<=128'b0;
+        round_keys1[3]<=128'b0;
+        round_keys1[4]<=128'b0;
+        round_keys1[5]<=128'b0;
+        round_keys1[6]<=128'b0;
+        round_keys1[7]<=128'b0;
+        round_keys1[8]<=128'b0;
+        round_keys1[9]<=128'b0;
+        round_keys1[10]<=128'b0;
+         block1<=128'b0; 
+         valid1<=1'b0;
+     end
+     else begin
+        round_keys1[0]<=round_keys[0];
+        round_keys1[1]<=round_keys[1];
+        round_keys1[2]<=round_keys[2];
+        round_keys1[3]<=round_keys[3];
+        round_keys1[4]<=round_keys[4];
+        round_keys1[5]<=round_keys[5];
+        round_keys1[6]<=round_keys[6];
+        round_keys1[7]<=round_keys[7];
+        round_keys1[8]<=round_keys[8];
+        round_keys1[9]<=round_keys[9];
+        round_keys1[10]<=round_keys[10];
+         block1<=state0;   
+         valid1<=valid_in;
+     end
+     end
+             
              
 //block1
      //round1
@@ -461,23 +485,40 @@ end
      
 //block1 over
      
-     
-   always @(posedge clk) begin
-    // Manually unroll the loop
-    round_keys2[0]  <= round_keys1[0];
-    round_keys2[1]  <= round_keys1[1];
-    round_keys2[2]  <= round_keys1[2];
-    round_keys2[3]  <= round_keys1[3];
-    round_keys2[4]  <= round_keys1[4];
-    round_keys2[5]  <= round_keys1[5];
-    round_keys2[6]  <= round_keys1[6];
-    round_keys2[7]  <= round_keys1[7];
-    round_keys2[8]  <= round_keys1[8];
-    round_keys2[9]  <= round_keys1[9];
-    round_keys2[10] <= round_keys1[10];
-    
-    block2 <= block12;
-end 
+
+     always@(posedge clk ) begin
+     if(reset) begin
+        round_keys2[0]<=128'b0;
+        round_keys2[1]<=128'b0;
+        round_keys2[2]<=128'b0;
+        round_keys2[3]<=128'b0;
+        round_keys2[4]<=128'b0;
+        round_keys2[5]<=128'b0;
+        round_keys2[6]<=128'b0;
+        round_keys2[7]<=128'b0;
+        round_keys2[8]<=128'b0;
+        round_keys2[9]<=128'b0;
+        round_keys2[10]<=128'b0;
+         block2<=128'b0;
+         valid2<=1'b0; 
+     end
+     else begin
+        round_keys2[0]<=round_keys1[0];
+        round_keys2[1]<=round_keys1[1];
+        round_keys2[2]<=round_keys1[2];
+        round_keys2[3]<=round_keys1[3];
+        round_keys2[4]<=round_keys1[4];
+        round_keys2[5]<=round_keys1[5];
+        round_keys2[6]<=round_keys1[6];
+        round_keys2[7]<=round_keys1[7];
+        round_keys2[8]<=round_keys1[8];
+        round_keys2[9]<=round_keys1[9];
+        round_keys2[10]<=round_keys1[10];
+         block2<=block12;
+         valid2<=valid1;
+     end
+     end
+ 
 //block2
      
      //round4
@@ -562,22 +603,39 @@ end
             );
      //block2 over
      
-    always @(posedge clk) begin
-    // Manually unroll the loop
-    round_keys3[0]  <= round_keys2[0];
-    round_keys3[1]  <= round_keys2[1];
-    round_keys3[2]  <= round_keys2[2];
-    round_keys3[3]  <= round_keys2[3];
-    round_keys3[4]  <= round_keys2[4];
-    round_keys3[5]  <= round_keys2[5];
-    round_keys3[6]  <= round_keys2[6];
-    round_keys3[7]  <= round_keys2[7];
-    round_keys3[8]  <= round_keys2[8];
-    round_keys3[9]  <= round_keys2[9];
-    round_keys3[10] <= round_keys2[10];
-    
-    block3 <= block23;
-end
+     
+     always@(posedge clk) begin
+     if(reset) begin
+        round_keys3[0]<=128'b0;
+        round_keys3[1]<=128'b0;
+        round_keys3[2]<=128'b0;
+        round_keys3[3]<=128'b0;
+        round_keys3[4]<=128'b0;
+        round_keys3[5]<=128'b0;
+        round_keys3[6]<=128'b0;
+        round_keys3[7]<=128'b0;
+        round_keys3[8]<=128'b0;
+        round_keys3[9]<=128'b0;
+        round_keys3[10]<=128'b0;
+         block3<=128'b0;
+         valid3<=1'b0; 
+     end
+     else begin
+        round_keys3[0]<=round_keys2[0];
+        round_keys3[1]<=round_keys2[1];
+        round_keys3[2]<=round_keys2[2];
+        round_keys3[3]<=round_keys2[3];
+        round_keys3[4]<=round_keys2[4];
+        round_keys3[5]<=round_keys2[5];
+        round_keys3[6]<=round_keys2[6];
+        round_keys3[7]<=round_keys2[7];
+        round_keys3[8]<=round_keys2[8];
+        round_keys3[9]<=round_keys2[9];
+        round_keys3[10]<=round_keys2[10];
+        block3<=block23;
+        valid3<=valid2;
+     end
+     end
      
      //block3
      //round7
@@ -681,6 +739,13 @@ end
      //block3 over
      
      always @(posedge clk) begin
+     if(reset) begin
+     valid_output<=1'b0;
+     ciphertext<=128'b0;
+     end
+     else  begin
+        valid_output<=valid3;
          ciphertext<=block3end;
+         end
          end
 endmodule
