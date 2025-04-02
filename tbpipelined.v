@@ -1,13 +1,16 @@
 `timescale 1ns / 1ns
 
-module testbench();
+module aes_cipher_tb();
 
     // Inputs
     reg [127:0] plaintext;
     reg [127:0] key;
     reg clk;
+    reg reset;
+    reg valid_in;
     
     // Output
+    wire valid_output;
     wire [127:0] ciphertext;
     
     // Instantiate the Unit Under Test (UUT)
@@ -15,6 +18,9 @@ module testbench();
         .plaintext(plaintext),
         .key(key),
         .clk(clk),
+        .valid_in(valid_in),
+        .reset(reset),
+        .valid_output(valid_output),
         .ciphertext(ciphertext)
     );
     
@@ -29,6 +35,8 @@ module testbench();
         clk = 0;
         plaintext = 0;
         key = 0;
+        reset = 0;
+        valid_in = 1;
         
         // Wait for global reset
        
@@ -96,9 +104,32 @@ module testbench();
         $display("Expected:   f3eed1bdb5d2a03c064b5a7e3db181f8");
         $display("Result:    %s", (ciphertext === 128'hf3eed1bdb5d2a03c064b5a7e3db181f8) ? "PASS" : "FAIL");
         
+        
+        
         // End simulation
         #100;
+        reset = 1;
+         $display("Ciphertext: %h", ciphertext);
+        #25
+        reset = 0;
+        $display("\n[%0t] Test Case 5: Random Test Vector", $time);
+        plaintext = 128'h6bc1bee22e409f96e93d7e117393172a;
+        key = 128'h603deb1015ca71be2b73aef0857d7781;
+        
+        
+        
+        $display("Plaintext: %h", plaintext);
+        $display("Key:       %h", key);
+        $display("Ciphertext: %h", ciphertext);
+        $display("Expected:   f3eed1bdb5d2a03c064b5a7e3db181f8");
         $display("\n[%0t] Simulation Complete", $time);
+        
+        #33
+        valid_in=1'b0;
+        #33;
+        valid_in=1'b1;
+        
+        #200
         $finish;
     end
     
