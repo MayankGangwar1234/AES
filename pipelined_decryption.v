@@ -453,7 +453,7 @@ module main_module_decrypt(
     output reg [127:0] plaintext
 );
     // Internal signals for round processing
-    reg [127:0] round_keys [0:10];
+    wire [127:0] round_keys [0:10];
     reg [127:0] round_keys1 [0:10];
     reg [127:0] round_keys2 [0:10];
     reg [127:0] round_keys3 [0:10];
@@ -468,7 +468,19 @@ module main_module_decrypt(
      reg valid1,valid2,valid3;
    
     // Generate all round keys
-  key_expansion ky(.key(key), .op_key0(round_keys[0]), .op_key1(round_keys[1]), .op_key2(round_keys[2]), .op_key3(round_keys[3]), .op_key4(round_keys[4]), .op_key5(round_keys[5]), .op_key6(round_keys[6]), .op_key7(round_keys[7]), .op_key8(round_keys[8]), .op_key9(round_keys[9]), .op_key10(round_keys[10]));
+  key_expansion ky(.key(key),
+   .op_key0(round_keys[0]), 
+   .op_key1(round_keys[1]), 
+   .op_key2(round_keys[2]), 
+   .op_key3(round_keys[3]), 
+   .op_key4(round_keys[4]), 
+   .op_key5(round_keys[5]), 
+   .op_key6(round_keys[6]), 
+   .op_key7(round_keys[7]), 
+   .op_key8(round_keys[8]), 
+   .op_key9(round_keys[9]), 
+   .op_key10(round_keys[10])
+   );
   
     
     // Initial round (Round 10)
