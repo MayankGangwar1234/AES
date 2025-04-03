@@ -1,4 +1,4 @@
-// Code your design here
+
 `timescale 1ns / 1ns
 module aes_sub_bytes(
     input  [127:0] state_in,
@@ -24,7 +24,7 @@ module aes_sbox (
     output reg [7:0] data_out      // 8-bit substituted output
 );
     // S-Box substitution values (from AES standard)
-    // Stored as a 1D array of 256 8-bit values
+    // Stored as a 2D array of 256 8-bit values
     reg [7:0] sbox [0:255];
 
     // Initialize the S-Box with substitution values
@@ -157,7 +157,7 @@ module mixcolumns (
     function [7:0] gf_mul2;
         input [7:0] b;
         begin
-            gf_mul2 = {b[6:0], 1'b0} ^ (8'h1b & {8{b[7]}});
+            gf_mul2 = {b[6:0], 1'b0} ^ (8'h1b & {8{b[7]}});  //exor with 0x1b to handle overflow
         end
     endfunction
 
@@ -194,7 +194,7 @@ module mixcolumns (
 endmodule
 module g(input [31:0] w, input [3:0] round, output [31:0] g_op);
   wire [31:0] RC[0:10];
-  wire [7:0] sb0, sb1, sb2, sb3;  // Fixed: was sbo
+  wire [7:0] sb0, sb1, sb2, sb3;  
   
   assign RC[4'h0] = 32'h00000000; 
   assign RC[4'h1] = 32'h01000000; assign RC[4'h2] = 32'h02000000;
@@ -285,8 +285,8 @@ module key_expansion(input[127:0] key, output reg [127:0] op_key0,output reg [12
   wire [31:0] w32,w33,w34,w35;
   assign w32 = w28 ^ g_8;
   assign w33 = w32 ^ w29;
-  assign w34 = w33 ^ w30;  // Fixed: was w17^w30
-  assign w35 = w34 ^ w31;  // Fixed: was w18^w31
+  assign w34 = w33 ^ w30;  
+  assign w35 = w34 ^ w31;  
   
   // Round 9
   wire [31:0] g_9;
@@ -301,7 +301,7 @@ module key_expansion(input[127:0] key, output reg [127:0] op_key0,output reg [12
   wire [31:0] g_10;
   g k(.w(w39), .round(4'd10), .g_op(g_10));
   wire [31:0] w40,w41,w42,w43;
-  assign w40 = w36 ^ g_10;  // Fixed: was g_8
+  assign w40 = w36 ^ g_10;  
   assign w41 = w40 ^ w37;
   assign w42 = w41 ^ w38;
   assign w43 = w42 ^ w39;
@@ -339,13 +339,14 @@ endmodule
     output reg valid_output,
     output reg [127:0] ciphertext
 );
-    // Internal signals for round processing
+    //initial round key
      wire [127:0] round_keys [0:10];
+     //registers for pipelining
      reg [127:0] round_keys1 [0:10];
      reg [127:0] round_keys2[0:10];
      reg [127:0] round_keys3[0:10];
      wire [127:0]state0;
-     //reg [127:0] state1;
+    
      wire [127:0] state2,state3,state4,state5,state9,state8,state7 ;
      reg [127:0] block1;
      wire [127:0] block12;
