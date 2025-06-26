@@ -108,8 +108,10 @@ This project is released under the **MIT License** — feel free to use, modify,
 
 **Aalok Moliya**  
 [🔗 GitHub Profile](https://github.com/AalokMoliya)
+
 **Shudhanshu Bhadana**
 [🔗 GitHub Profile](https://github.com/SHUDHANSHU-BHADANA)
+
 **Mayank Gangwar**
 [🔗 GitHub Profile](https://github.com/MayankGangwar1234)
 
