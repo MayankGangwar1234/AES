@@ -11,7 +11,7 @@ module mixcolumns (
     endfunction
 
     function [7:0] gf_mul3;
-        input [7:0] b;
+        input [7:0] b;                           // to multiply by 3 , mul by two and then add once (using exor fn)
         begin
             gf_mul3 = gf_mul2(b) ^ b;
         end
