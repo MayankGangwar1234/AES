@@ -341,10 +341,12 @@ endmodule
 );
     //initial round key
      wire [127:0] round_keys [0:10];
+     
      //registers for pipelining
      reg [127:0] round_keys1 [0:10];
      reg [127:0] round_keys2[0:10];
      reg [127:0] round_keys3[0:10];
+     
      wire [127:0]state0;
     
      wire [127:0] state2,state3,state4,state5,state9,state8,state7 ;
