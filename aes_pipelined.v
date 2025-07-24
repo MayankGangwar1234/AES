@@ -1,5 +1,4 @@
 
-`timescale 1ns / 1ns
 module aes_sub_bytes(
     input  [127:0] state_in,
     output [127:0] state_out
