@@ -1,14 +1,14 @@
 module g(input [31:0] w, input [3:0] round, output [31:0] g_op);
-  wire [31:0] RC[0:10];
-  wire [7:0] sb0, sb1, sb2, sb3;  // Fixed: was sbo
-  
-  assign RC[4'h0] = 32'h00000000; 
-  assign RC[4'h1] = 32'h01000000; assign RC[4'h2] = 32'h02000000;
-  assign RC[4'h3] = 32'h04000000; assign RC[4'h4] = 32'h08000000;
-  assign RC[4'h5] = 32'h10000000; assign RC[4'h6] = 32'h20000000;
-  assign RC[4'h7] = 32'h40000000; assign RC[4'h8] = 32'h80000000;
-  assign RC[4'h9] = 32'h1B000000; assign RC[4'ha] = 32'h36000000;
-  
+  reg [31:0] RC[0:10];
+  wire [7:0] sb0, sb1, sb2, sb3;
+  initial begin
+   RC[4'h0] = 32'h00000000; 
+   RC[4'h1] = 32'h01000000;  RC[4'h2] = 32'h02000000;
+   RC[4'h3] = 32'h04000000;  RC[4'h4] = 32'h08000000;
+   RC[4'h5] = 32'h10000000;  RC[4'h6] = 32'h20000000;
+   RC[4'h7] = 32'h40000000;  RC[4'h8] = 32'h80000000;
+   RC[4'h9] = 32'h1B000000;  RC[4'ha] = 32'h36000000;
+  end
   aes_sbox aa(.data_in(w[23:16]), .data_out(sb0));
   aes_sbox bb(.data_in(w[15:8]), .data_out(sb1));
   aes_sbox cc(.data_in(w[7:0]), .data_out(sb2));
@@ -91,8 +91,8 @@ module key_expansion(input[127:0] key, output reg [127:0] op_key0,output reg [12
   wire [31:0] w32,w33,w34,w35;
   assign w32 = w28 ^ g_8;
   assign w33 = w32 ^ w29;
-  assign w34 = w33 ^ w30;  // Fixed: was w17^w30
-  assign w35 = w34 ^ w31;  // Fixed: was w18^w31
+  assign w34 = w33 ^ w30;  
+  assign w35 = w34 ^ w31;  
   
   // Round 9
   wire [31:0] g_9;
@@ -107,7 +107,7 @@ module key_expansion(input[127:0] key, output reg [127:0] op_key0,output reg [12
   wire [31:0] g_10;
   g k(.w(w39), .round(4'd10), .g_op(g_10));
   wire [31:0] w40,w41,w42,w43;
-  assign w40 = w36 ^ g_10;  // Fixed: was g_8
+  assign w40 = w36 ^ g_10;  
   assign w41 = w40 ^ w37;
   assign w42 = w41 ^ w38;
   assign w43 = w42 ^ w39;
