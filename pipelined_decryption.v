@@ -306,7 +306,7 @@ endmodule
 
 module g(input [31:0] w, input [3:0] round, output [31:0] g_op);
   wire [31:0] RC[0:10];
-  wire [7:0] sb0, sb1, sb2, sb3;  // Fixed: was sbo
+  wire [7:0] sb0, sb1, sb2, sb3; 
   
   assign RC[4'h0] = 32'h00000000; 
   assign RC[4'h1] = 32'h01000000; assign RC[4'h2] = 32'h02000000;
