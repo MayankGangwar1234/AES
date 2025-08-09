@@ -8,8 +8,8 @@ module aes_sub_bytes(
     generate
         for (i = 0; i < 16; i = i + 1) begin : sub_bytes_loop
           aes_sbox sbox_inst (
-                .data_in(state_in[(i*8) +: 8]),
-                .data_out(state_out[(i*8) +: 8])
+              .data_in(state_in[(8*i)+7: 8*i]),
+              .data_out(state_out[(8*i)+7: 8*i])
             );
         end
     endgenerate
