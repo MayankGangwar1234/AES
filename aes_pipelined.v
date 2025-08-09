@@ -17,7 +17,7 @@ module aes_sub_bytes(
 endmodule
 module aes_sbox (
     input wire [7:0] data_in,      // 8-bit input (16x16 = 256 possible values)
-    output reg [7:0] data_out      // 8-bit substituted output
+    output wire [7:0] data_out      // 8-bit substituted output
 );
     // S-Box substitution values (from AES standard)
     // Stored as a 2D array of 256 8-bit values
@@ -106,10 +106,7 @@ module aes_sbox (
         sbox[8'hfc] = 8'hb0; sbox[8'hfd] = 8'h54; sbox[8'hfe] = 8'hbb; sbox[8'hff] = 8'h16;
     end
 
-    // Perform the substitution
-    always @(*) begin
-        data_out = sbox[data_in];
-    end
+    assign data_out=sbox[data_in];
 
 endmodule
 module row_shift(
