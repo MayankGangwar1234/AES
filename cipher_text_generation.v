@@ -19,7 +19,7 @@
     genvar i;
     // 9 main rounds (Round 1 to 9)
     generate
-     for (i = 1; i <= 9; i++) begin : MAIN_ROUNDS
+     for (i = 1; i <= 9; i=i+1) begin : MAIN_ROUNDS
             wire [127:0] subbed, shifted, mixed;
             
             // SubBytes
