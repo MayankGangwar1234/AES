@@ -1,7 +1,7 @@
 # AES
 # 🔐 AES-128 Encryption and Decryption in Verilog
 
-This project implements an **AES-128 encryption pipeline** in **Verilog HDL**, suitable for **FPGA** or **ASIC** designs. The design is fully **pipelined** and follows the **10-round AES** standard with SubBytes, ShiftRows, MixColumns, and AddRoundKey transformations, along with a **key expansion** module.
+This project implements an **AES-128 encryption and decryption pipeline** in **Verilog HDL**, suitable for **FPGA** or **ASIC** designs. The design is fully **pipelined** and follows the **10-round AES** standard with SubBytes, ShiftRows, MixColumns, and AddRoundKey transformations, along with a **key expansion** module.
 
 ---
 
