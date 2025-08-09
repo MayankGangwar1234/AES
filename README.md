@@ -51,7 +51,7 @@ Each AES round includes the following steps:
 
 1. **SubBytes** — Byte-wise substitution using an S-Box  
 2. **ShiftRows** — Cyclic row-wise shifting of the state  
-3. **MixColumns** — Mixes the columns of the state (except in the final round)  
+3. **MixColumns** — Multiplication with a predefined matrix
 4. **AddRoundKey** — XOR of the state with a round key  
 
 ---
