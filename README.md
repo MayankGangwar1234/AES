@@ -37,7 +37,7 @@ This project implements an **AES-128 encryption pipeline** in **Verilog HDL**, s
 
 ## 🚀 Features
 
-- ✅ Fully **3 stage pipelined** 10-round AES encryption  
+- ✅ Fully **4 segment pipelined** 10-round AES encryption  
 - 🔄 Combinational **key expansion**  
 - ⏱ Clocked registers for data and key propagation  
 - 🧾 Synthesizable on both **FPGA** and **ASIC** platforms  
