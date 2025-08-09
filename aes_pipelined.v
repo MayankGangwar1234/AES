@@ -1,19 +1,16 @@
-
 module aes_sub_bytes(
     input  [127:0] state_in,
     output [127:0] state_out
 );
     
-    wire [7:0] sbox_out[15:0];
     
     genvar i;
     generate
         for (i = 0; i < 16; i = i + 1) begin : sub_bytes_loop
           aes_sbox sbox_inst (
                 .data_in(state_in[(i*8) +: 8]),
-                .data_out(sbox_out[i])
+                .data_out(state_out[(i*8) +: 8])
             );
-            assign state_out[(i*8) +: 8] = sbox_out[i];
         end
     endgenerate
 
@@ -192,16 +189,16 @@ module mixcolumns (
     endgenerate
 endmodule
 module g(input [31:0] w, input [3:0] round, output [31:0] g_op);
-  wire [31:0] RC[0:10];
-  wire [7:0] sb0, sb1, sb2, sb3;  
-  
-  assign RC[4'h0] = 32'h00000000; 
-  assign RC[4'h1] = 32'h01000000; assign RC[4'h2] = 32'h02000000;
-  assign RC[4'h3] = 32'h04000000; assign RC[4'h4] = 32'h08000000;
-  assign RC[4'h5] = 32'h10000000; assign RC[4'h6] = 32'h20000000;
-  assign RC[4'h7] = 32'h40000000; assign RC[4'h8] = 32'h80000000;
-  assign RC[4'h9] = 32'h1B000000; assign RC[4'ha] = 32'h36000000;
-  
+  reg [31:0] RC[0:10];
+  wire [7:0] sb0, sb1, sb2, sb3;
+  initial begin
+   RC[4'h0] = 32'h00000000; 
+   RC[4'h1] = 32'h01000000;  RC[4'h2] = 32'h02000000;
+   RC[4'h3] = 32'h04000000;  RC[4'h4] = 32'h08000000;
+   RC[4'h5] = 32'h10000000;  RC[4'h6] = 32'h20000000;
+   RC[4'h7] = 32'h40000000;  RC[4'h8] = 32'h80000000;
+   RC[4'h9] = 32'h1B000000;  RC[4'ha] = 32'h36000000;
+  end
   aes_sbox aa(.data_in(w[23:16]), .data_out(sb0));
   aes_sbox bb(.data_in(w[15:8]), .data_out(sb1));
   aes_sbox cc(.data_in(w[7:0]), .data_out(sb2));
@@ -345,66 +342,44 @@ endmodule
      reg [127:0] round_keys1 [0:10];
      reg [127:0] round_keys2[0:10];
      reg [127:0] round_keys3[0:10];
+     reg [127:0] block1,block2,block3;
      
-     wire [127:0]state0;
-    
-     wire [127:0] state2,state3,state4,state5,state9,state8,state7 ;
-     reg [127:0] block1;
-     wire [127:0] block12;
-     wire [127:0] block3end;
-     wire [127:0] block23;
+     wire [127:0] state[0:10];
 
-     reg [127:0] block2;
-     reg [127:0] block3;
      reg valid1,valid2,valid3;
+     
+     
+  
+   //**SEGMENT 1**
     
-    
-         
     // Generate all round keys
   key_expansion ky(.key(key), .op_key0(round_keys[0]), .op_key1(round_keys[1]), .op_key2(round_keys[2]), .op_key3(round_keys[3]), .op_key4(round_keys[4]), .op_key5(round_keys[5]), .op_key6(round_keys[6]), .op_key7(round_keys[7]), .op_key8(round_keys[8]), .op_key9(round_keys[9]), .op_key10(round_keys[10]));
     
-    // Initial round (Round 0) - just AddRoundKey
+    //(Round 0) - just AddRoundKey
     add_round_key ark0(
         .state_in(plaintext),
       .key(round_keys[0]),
-        .state_out(state0)
+        .state_out(state[0])
     );
-     
+    
+    // **UPDATE PIPELINE REGISTERS**
+     integer x;
      always@(posedge clk) begin
      if(reset) begin
-        round_keys1[0]<=128'b0;
-        round_keys1[1]<=128'b0;
-        round_keys1[2]<=128'b0;
-        round_keys1[3]<=128'b0;
-        round_keys1[4]<=128'b0;
-        round_keys1[5]<=128'b0;
-        round_keys1[6]<=128'b0;
-        round_keys1[7]<=128'b0;
-        round_keys1[8]<=128'b0;
-        round_keys1[9]<=128'b0;
-        round_keys1[10]<=128'b0;
+         for(x=0;x<11;x=x+1) round_keys1[x]<=128'b0;
          block1<=128'b0; 
          valid1<=1'b0;
      end
      else begin
-        round_keys1[0]<=round_keys[0];
-        round_keys1[1]<=round_keys[1];
-        round_keys1[2]<=round_keys[2];
-        round_keys1[3]<=round_keys[3];
-        round_keys1[4]<=round_keys[4];
-        round_keys1[5]<=round_keys[5];
-        round_keys1[6]<=round_keys[6];
-        round_keys1[7]<=round_keys[7];
-        round_keys1[8]<=round_keys[8];
-        round_keys1[9]<=round_keys[9];
-        round_keys1[10]<=round_keys[10];
-         block1<=state0;   
+        for(x=0;x<11;x=x+1) round_keys1[x]<=round_keys[x];
+         block1<=state[0];   
          valid1<=valid_in;
      end
      end
              
              
-//block1
+//**SEGMENT 2**
+
      //round1
    wire [127:0] subbed, shifted, mixed;         
             // SubBytes
@@ -429,13 +404,13 @@ endmodule
             add_round_key ark1(
                 .state_in(mixed),
                 .key(round_keys1[1]),
-                .state_out(state2)
+                .state_out(state[1])
             );
      //round2
      wire [127:0] subbed1, shifted1, mixed1;         
             // SubBytes
             aes_sub_bytes sb2(
-                .state_in(state2),
+                .state_in(state[1]),
                 .state_out(subbed1)
             );
             
@@ -455,13 +430,13 @@ endmodule
             add_round_key ark2(
                 .state_in(mixed1),
                 .key(round_keys1[2]),
-                .state_out(state3)
+                .state_out(state[2])
             );
      //round3
      wire [127:0] subbed2, shifted2, mixed2;         
             // SubBytes
             aes_sub_bytes sb3(
-                .state_in(state3),
+                .state_in(state[2]),
                 .state_out(subbed2)
             );
             
@@ -481,47 +456,27 @@ endmodule
             add_round_key ark3(
                 .state_in(mixed2),
                 .key(round_keys1[3]),
-                .state_out(block12)
+                .state_out(state[3])
             );
      
      
-//block1 over
+//**UPDATE REGISTERS**
      
 
      always@(posedge clk ) begin
      if(reset) begin
-        round_keys2[0]<=128'b0;
-        round_keys2[1]<=128'b0;
-        round_keys2[2]<=128'b0;
-        round_keys2[3]<=128'b0;
-        round_keys2[4]<=128'b0;
-        round_keys2[5]<=128'b0;
-        round_keys2[6]<=128'b0;
-        round_keys2[7]<=128'b0;
-        round_keys2[8]<=128'b0;
-        round_keys2[9]<=128'b0;
-        round_keys2[10]<=128'b0;
+        for(x=0;x<11;x=x+1) round_keys2[x]<=128'b0;
          block2<=128'b0;
          valid2<=1'b0; 
      end
      else begin
-        round_keys2[0]<=round_keys1[0];
-        round_keys2[1]<=round_keys1[1];
-        round_keys2[2]<=round_keys1[2];
-        round_keys2[3]<=round_keys1[3];
-        round_keys2[4]<=round_keys1[4];
-        round_keys2[5]<=round_keys1[5];
-        round_keys2[6]<=round_keys1[6];
-        round_keys2[7]<=round_keys1[7];
-        round_keys2[8]<=round_keys1[8];
-        round_keys2[9]<=round_keys1[9];
-        round_keys2[10]<=round_keys1[10];
-         block2<=block12;
+        for(x=0;x<11;x=x+1) round_keys2[x]<=round_keys1[x];
+         block2<=state[3];
          valid2<=valid1;
      end
      end
  
-//block2
+//**SEGMENT 3
      
      //round4
      wire [127:0] subbed3, shifted3, mixed3;         
@@ -547,14 +502,14 @@ endmodule
             add_round_key ark4(
                 .state_in(mixed3),
                 .key(round_keys2[4]),
-                .state_out(state4)
+                .state_out(state[4])
             );
      
      //round5
      wire [127:0] subbed4, shifted4, mixed4;         
             // SubBytes
             aes_sub_bytes sb5(
-                .state_in(state4),
+                .state_in(state[4]),
                 .state_out(subbed4)
             );
             
@@ -574,14 +529,14 @@ endmodule
             add_round_key ark5(
                 .state_in(mixed4),
                 .key(round_keys2[5]),
-                .state_out(state5)
+                .state_out(state[5])
             );
      
      //round6
      wire [127:0] subbed5, shifted5, mixed5;         
             // SubBytes
             aes_sub_bytes sb6(
-                .state_in(state5),
+                .state_in(state[5]),
                 .state_out(subbed5)
             );
             
@@ -601,45 +556,27 @@ endmodule
             add_round_key ark6(
                 .state_in(mixed5),
                 .key(round_keys2[6]),
-                .state_out(block23)
+                .state_out(state[6])
             );
-     //block2 over
      
      
+ //**UPDATE PIPELINE REGISTERS**
      always@(posedge clk) begin
      if(reset) begin
-        round_keys3[0]<=128'b0;
-        round_keys3[1]<=128'b0;
-        round_keys3[2]<=128'b0;
-        round_keys3[3]<=128'b0;
-        round_keys3[4]<=128'b0;
-        round_keys3[5]<=128'b0;
-        round_keys3[6]<=128'b0;
-        round_keys3[7]<=128'b0;
-        round_keys3[8]<=128'b0;
-        round_keys3[9]<=128'b0;
-        round_keys3[10]<=128'b0;
+        for(x=0;x<11;x=x+1) round_keys3[x]<=128'b0;
          block3<=128'b0;
          valid3<=1'b0; 
      end
      else begin
-        round_keys3[0]<=round_keys2[0];
-        round_keys3[1]<=round_keys2[1];
-        round_keys3[2]<=round_keys2[2];
-        round_keys3[3]<=round_keys2[3];
-        round_keys3[4]<=round_keys2[4];
-        round_keys3[5]<=round_keys2[5];
-        round_keys3[6]<=round_keys2[6];
-        round_keys3[7]<=round_keys2[7];
-        round_keys3[8]<=round_keys2[8];
-        round_keys3[9]<=round_keys2[9];
-        round_keys3[10]<=round_keys2[10];
-        block3<=block23;
+        for(x=0;x<11;x=x+1) round_keys3[x]<=round_keys2[x];
+        block3<=state[6];
         valid3<=valid2;
      end
      end
      
-     //block3
+     
+//**SEGMENT 4**   
+   
      //round7
      wire [127:0] subbed6, shifted6, mixed6;         
             // SubBytes
@@ -664,13 +601,13 @@ endmodule
             add_round_key ark7(
                 .state_in(mixed6),
                 .key(round_keys3[7]),
-                .state_out(state7)
+                .state_out(state[7])
             );
      //round8
      wire [127:0] subbed7, shifted7, mixed7;         
             // SubBytes
             aes_sub_bytes sb8(
-                .state_in(state7),
+                .state_in(state[7]),
                 .state_out(subbed7)
             );
             
@@ -690,13 +627,13 @@ endmodule
             add_round_key ark8(
                 .state_in(mixed7),
                 .key(round_keys3[8]),
-                .state_out(state8)
+                .state_out(state[8])
             );
      //round9
      wire [127:0] subbed8, shifted8, mixed8;         
             // SubBytes
             aes_sub_bytes sb9(
-                .state_in(state8),
+                .state_in(state[8]),
                 .state_out(subbed8)
             );
             
@@ -716,13 +653,13 @@ endmodule
             add_round_key ark9(
                 .state_in(mixed8),
                 .key(round_keys3[9]),
-                .state_out(state9)
+                .state_out(state[9])
             );
      //round10
      wire [127:0] subbed9, shifted9;         
             // SubBytes
             aes_sub_bytes sb10(
-                .state_in(state9),
+                .state_in(state[9]),
                 .state_out(subbed9)
             );
             
@@ -736,10 +673,12 @@ endmodule
             add_round_key ark10(
                 .state_in(shifted9),
                 .key(round_keys3[10]),
-                .state_out(block3end)
+                .state_out(state[10])
             );
-     //block3 over
-     
+            
+    
+ //**UPDATE RESULTS** 
+   
      always @(posedge clk) begin
      if(reset) begin
      valid_output<=1'b0;
@@ -747,7 +686,7 @@ endmodule
      end
      else  begin
         valid_output<=valid3;
-         ciphertext<=block3end;
+         ciphertext<=state[10];
          end
          end
 endmodule
