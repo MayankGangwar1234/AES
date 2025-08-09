@@ -124,17 +124,15 @@ module inv_sub_bytes(
     genvar i;
     generate
         for (i = 0; i < 16; i = i + 1) begin : inv_sub_bytes_loop
-            assign state_out[(i*8) +: 8] = inv_sbox[state_in[(i*8) +: 8]];
+            assign state_out[(i*8)+7 :8*i] = inv_sbox[state_in[(i*8)+7 :8*i]];
         end
     endgenerate
 endmodule
 
 module aes_sbox (
-    input wire [7:0] data_in,      // 8-bit input (16x16 = 256 possible values)
-    output reg [7:0] data_out      // 8-bit substituted output
+    input wire [7:0] data_in,      
+    output reg [7:0] data_out      
 );
-    // S-Box substitution values (from AES standard)
-    // Stored as a 1D array of 256 8-bit values
     reg [7:0] sbox [0:255];
 
     // Initialize the S-Box with substitution values
@@ -285,36 +283,36 @@ module inv_mix_columns (
     genvar i;
     generate
         for (i = 0; i < 4; i = i + 1) begin : inv_mix_column
-            wire [7:0] b0 = state_in[127-32*i -: 8];  
-            wire [7:0] b1 = state_in[127-32*i-8 -: 8]; 
-            wire [7:0] b2 = state_in[127-32*i-16 -: 8]; 
-            wire [7:0] b3 = state_in[127-32*i-24 -: 8]; 
+            wire [7:0] b0 = state_in[(127-32*i) : (127-32*i)-7];  
+            wire [7:0] b1 = state_in[(127-32*i)-8 : (127-32*i)-15]; 
+            wire [7:0] b2 = state_in[(127-32*i)-16 : (127-32*i)-23]; 
+            wire [7:0] b3 = state_in[(127-32*i)-24 : (127-32*i)-31]; 
             
             wire [7:0] new_b0 = gf_mule(b0) ^ gf_mulb(b1) ^ gf_muld(b2) ^ gf_mul9(b3);
             wire [7:0] new_b1 = gf_mul9(b0) ^ gf_mule(b1) ^ gf_mulb(b2) ^ gf_muld(b3);
             wire [7:0] new_b2 = gf_muld(b0) ^ gf_mul9(b1) ^ gf_mule(b2) ^ gf_mulb(b3);
             wire [7:0] new_b3 = gf_mulb(b0) ^ gf_muld(b1) ^ gf_mul9(b2) ^ gf_mule(b3);
             
-            assign state_out[127-32*i -: 8] = new_b0;
-            assign state_out[127-32*i-8 -: 8] = new_b1;
-            assign state_out[127-32*i-16 -: 8] = new_b2;
-            assign state_out[127-32*i-24 -: 8] = new_b3;
+            assign state_out[(127-32*i) : (127-32*i)-7] = new_b0;
+            assign state_out[(127-32*i)-8 : (127-32*i)-15] = new_b1;
+            assign state_out[(127-32*i)-16 : (127-32*i)-23] = new_b2;
+            assign state_out[(127-32*i)-24 : (127-32*i)-31] = new_b3;
         end
     endgenerate
 endmodule
 
 
 module g(input [31:0] w, input [3:0] round, output [31:0] g_op);
-  wire [31:0] RC[0:10];
-  wire [7:0] sb0, sb1, sb2, sb3; 
-  
-  assign RC[4'h0] = 32'h00000000; 
-  assign RC[4'h1] = 32'h01000000; assign RC[4'h2] = 32'h02000000;
-  assign RC[4'h3] = 32'h04000000; assign RC[4'h4] = 32'h08000000;
-  assign RC[4'h5] = 32'h10000000; assign RC[4'h6] = 32'h20000000;
-  assign RC[4'h7] = 32'h40000000; assign RC[4'h8] = 32'h80000000;
-  assign RC[4'h9] = 32'h1B000000; assign RC[4'ha] = 32'h36000000;
-  
+  reg [31:0] RC[0:10];
+  wire [7:0] sb0, sb1, sb2, sb3;  // Fixed: was sbo
+  initial begin
+   RC[4'h0] = 32'h00000000; 
+   RC[4'h1] = 32'h01000000;  RC[4'h2] = 32'h02000000;
+   RC[4'h3] = 32'h04000000;  RC[4'h4] = 32'h08000000;
+   RC[4'h5] = 32'h10000000;  RC[4'h6] = 32'h20000000;
+   RC[4'h7] = 32'h40000000;  RC[4'h8] = 32'h80000000;
+   RC[4'h9] = 32'h1B000000;  RC[4'ha] = 32'h36000000;
+  end
   aes_sbox aa(.data_in(w[23:16]), .data_out(sb0));
   aes_sbox bb(.data_in(w[15:8]), .data_out(sb1));
   aes_sbox cc(.data_in(w[7:0]), .data_out(sb2));
@@ -443,7 +441,7 @@ module add_round_key(input[127:0] state_in,input[127:0] key,output [127:0] state
   assign state_out=state_in^key;
 endmodule
 
-module main_module_decrypt(
+module piplined_decryption(
     input [127:0] ciphertext,
     input [127:0] key,
     input reset,
@@ -454,19 +452,13 @@ module main_module_decrypt(
 );
     // Internal signals for round processing
     wire [127:0] round_keys [0:10];
+    wire [127:0] state[0:10];   
     reg [127:0] round_keys1 [0:10];
     reg [127:0] round_keys2 [0:10];
     reg [127:0] round_keys3 [0:10];
-  wire [127:0] state0,state1,state2,state3,state4,state5,state6,state7,state8,state9;
-    wire [127:0] block1end;
-    wire [127:0] block21;
-    
-    wire [127:0] block32;
-    reg [127:0] block1;
-     reg [127:0] block2;
-     reg [127:0] block3;
-     reg valid1,valid2,valid3;
-   
+    reg [127:0] block1, block2, block3;
+    reg valid1,valid2,valid3;
+    integer i;
     // Generate all round keys
   key_expansion ky(.key(key),
    .op_key0(round_keys[0]), 
@@ -488,49 +480,34 @@ module main_module_decrypt(
     
      always@(posedge clk) begin
      if(reset) begin
-        round_keys3[0]<=128'b0;
-        round_keys3[1]<=128'b0;
-        round_keys3[2]<=128'b0;
-        round_keys3[3]<=128'b0;
-        round_keys3[4]<=128'b0;
-        round_keys3[5]<=128'b0;
-        round_keys3[6]<=128'b0;
-        round_keys3[7]<=128'b0;
-        round_keys3[8]<=128'b0;
-        round_keys3[9]<=128'b0;
-        round_keys3[10]<=128'b0;
+ for(  i=0;i<11;i=i+1)begin
+        round_keys3[i]<=128'b0;
+        end
          block3<=128'b0; 
          valid3<=1'b0;
      end
           else begin
-        round_keys3[0]<=round_keys[0];
-        round_keys3[1]<=round_keys[1];
-        round_keys3[2]<=round_keys[2];
-        round_keys3[3]<=round_keys[3];
-        round_keys3[4]<=round_keys[4];
-        round_keys3[5]<=round_keys[5];
-        round_keys3[6]<=round_keys[6];
-        round_keys3[7]<=round_keys[7];
-        round_keys3[8]<=round_keys[8];
-        round_keys3[9]<=round_keys[9];
-        round_keys3[10]<=round_keys[10];
+        for(  i=0;i<11;i=i+1)begin
+        round_keys3[i]<=round_keys[i];
+        end
          block3<=ciphertext;   
          valid3<=valid_in;
      end
      end
-    //round 10
-    //block 1
+     //block 1
+    //round 0
+   
    add_round_key ark0(
      .state_in(block3),
      .key(round_keys3[10]),
-        .state_out(state0)
+        .state_out(state[0])
     );
-    
+    //round 1
     wire [127:0] inv_shifted9, inv_subbed9, mixed9;
             
             // Inverse ShiftRows
             inv_shift_rows isr1(
-              .state_in(state0),
+              .state_in(state[0]),
                 .state_out(inv_shifted9)
             );
             
@@ -551,14 +528,14 @@ module main_module_decrypt(
              //Inverse MixColumns
             inv_mix_columns imc0(
                 .state_in(mixed9),
-                .state_out(state1)
+                .state_out(state[1])
             );
-        
+    //round 2
     wire [127:0] inv_shifted8, inv_subbed8, mixed8;
             
             // Inverse ShiftRows
             inv_shift_rows isr2(
-                .state_in(state1),
+                .state_in(state[1]),
                 .state_out(inv_shifted8)
             );
             
@@ -579,14 +556,14 @@ module main_module_decrypt(
             // Inverse MixColumns
             inv_mix_columns imc2(
                 .state_in(mixed8),
-                .state_out(state2)
+                .state_out(state[2])
             );
-        
+    //round 3
     wire [127:0] inv_shifted7, inv_subbed7, mixed7;
             
             // Inverse ShiftRows
             inv_shift_rows isr3(
-                .state_in(state2),
+                .state_in(state[2]),
                 .state_out(inv_shifted7)
             );
             
@@ -607,14 +584,14 @@ module main_module_decrypt(
             // Inverse MixColumns
             inv_mix_columns imc3(
                 .state_in(mixed7),
-                .state_out(state3)
+                .state_out(state[3])
             );
-        
+    //round 4    
     wire [127:0] inv_shifted6, inv_subbed6, mixed6;
             
             // Inverse ShiftRows
             inv_shift_rows isr4(
-                .state_in(state3),
+                .state_in(state[3]),
                 .state_out(inv_shifted6)
             );
             
@@ -635,42 +612,27 @@ module main_module_decrypt(
             // Inverse MixColumns
             inv_mix_columns imc4(
                 .state_in(mixed6),
-                .state_out(block32)
+                .state_out(state[4])
             );
         
     //block3 end
      always@(posedge clk ) begin
      if(reset) begin
-        round_keys2[0]<=128'b0;
-        round_keys2[1]<=128'b0;
-        round_keys2[2]<=128'b0;
-        round_keys2[3]<=128'b0;
-        round_keys2[4]<=128'b0;
-        round_keys2[5]<=128'b0;
-        round_keys2[6]<=128'b0;
-        round_keys2[7]<=128'b0;
-        round_keys2[8]<=128'b0;
-        round_keys2[9]<=128'b0;
-        round_keys2[10]<=128'b0;
+        for(  i=0;i<11;i=i+1)begin
+        round_keys2[i]<=128'b0;
+        end
          block2<=128'b0;
          valid2<=1'b0; 
      end
      else begin
-       round_keys2[0]<=round_keys3[0];
-       round_keys2[1]<=round_keys3[1];
-       round_keys2[2]<=round_keys3[2];
-       round_keys2[3]<=round_keys3[3];
-       round_keys2[4]<=round_keys3[4];
-       round_keys2[5]<=round_keys3[5];
-       round_keys2[6]<=round_keys3[6];
-       round_keys2[7]<=round_keys3[7];
-       round_keys2[8]<=round_keys3[8];
-       round_keys2[9]<=round_keys3[9];
-       round_keys2[10]<=round_keys3[10];
-         block2<=block32;
+       for(  i=0;i<11;i=i+1)begin
+        round_keys2[i]<=round_keys3[i];
+        end
+         block2<=state[4];
          valid2<=valid3;
      end
      end
+    //round 5
     wire [127:0] inv_shifted5, inv_subbed5, mixed5;
             
             // Inverse ShiftRows
@@ -696,14 +658,14 @@ module main_module_decrypt(
             // Inverse MixColumns
             inv_mix_columns imc5(
                 .state_in(mixed5),
-                .state_out(state4)
+                .state_out(state[5])
             );
-        
+    //round 6     
     wire [127:0] inv_shifted4, inv_subbed4, mixed4;
             
             // Inverse ShiftRows
             inv_shift_rows isr6(
-                .state_in(state4),
+                .state_in(state[5]),
                 .state_out(inv_shifted4)
             );
             
@@ -724,14 +686,14 @@ module main_module_decrypt(
             // Inverse MixColumns
             inv_mix_columns imc6(
                 .state_in(mixed4),
-                .state_out(state5)
+                .state_out(state[6])
             );
-        
+    //round 7     
     wire [127:0] inv_shifted3, inv_subbed3, mixed3;
             
             // Inverse ShiftRows
             inv_shift_rows isr7(
-                .state_in(state5),
+                .state_in(state[6]),
               .state_out(inv_shifted3)
             );
             
@@ -752,43 +714,30 @@ module main_module_decrypt(
             // Inverse MixColumns
             inv_mix_columns imc7(
                 .state_in(mixed3),
-                .state_out(block21)
+                .state_out(state[7])
             );
         
     //block2 end
     
      always@(posedge clk) begin
      if(reset) begin
-        round_keys1[0]<=128'b0;
-        round_keys1[1]<=128'b0;
-        round_keys1[2]<=128'b0;
-        round_keys1[3]<=128'b0;
-        round_keys1[4]<=128'b0;
-        round_keys1[5]<=128'b0;
-        round_keys1[6]<=128'b0;
-        round_keys1[7]<=128'b0;
-        round_keys1[8]<=128'b0;
-        round_keys1[9]<=128'b0;
-        round_keys1[10]<=128'b0;
+       for(  i=0;i<11;i=i+1)begin
+        round_keys1[i]<=128'b0;
+        end
          block1<=128'b0;
          valid1<=1'b0; 
      end
      else begin
-        round_keys1[0]<=round_keys2[0];
-        round_keys1[1]<=round_keys2[1];
-        round_keys1[2]<=round_keys2[2];
-        round_keys1[3]<=round_keys2[3];
-        round_keys1[4]<=round_keys2[4];
-        round_keys1[5]<=round_keys2[5];
-        round_keys1[6]<=round_keys2[6];
-        round_keys1[7]<=round_keys2[7];
-        round_keys1[8]<=round_keys2[8];
-        round_keys1[9]<=round_keys2[9];
-        round_keys1[10]<=round_keys2[10];
-        block1<=block21;
+     
+     for(  i=0;i<11;i=i+1)begin
+        round_keys1[i]<=round_keys2[i];
+        end
+       
+        block1<=state[7];
         valid1<=valid2;
      end
      end
+    //round 8
     wire [127:0] inv_shifted2, inv_subbed2, mixed2;
             
             // Inverse ShiftRows
@@ -814,14 +763,14 @@ module main_module_decrypt(
             // Inverse MixColumns
             inv_mix_columns imc8(
                 .state_in(mixed2),
-                .state_out(state6)
+                .state_out(state[8])
             );
-        
+    //round 9      
     wire [127:0] inv_shifted1, inv_subbed1, mixed1;
             
             // Inverse ShiftRows
             inv_shift_rows isr9(
-                .state_in(state6),
+                .state_in(state[8]),
                 .state_out(inv_shifted1)
             );
             
@@ -842,17 +791,17 @@ module main_module_decrypt(
             // Inverse MixColumns
             inv_mix_columns imc9(
                 .state_in(mixed1),
-                .state_out(state7)
+                .state_out(state[9])
             );
         
     
     
-    // Final round (Round 0)
+    //round 10
     wire [127:0] final_inv_shifted, final_inv_subbed;
     
    // Inverse ShiftRows
     inv_shift_rows isr_final(
-      .state_in(state7),
+      .state_in(state[9]),
         .state_out(final_inv_shifted)
     );
     
@@ -867,9 +816,8 @@ module main_module_decrypt(
   add_round_key ark2(
     .state_in(final_inv_subbed),
     .key(round_keys1[0]),
-    .state_out(block1end)
-    );
-     //block 1over 
+    .state_out(state[10])
+    ); 
  always @(posedge clk) begin
      if(reset) begin
      valid_output<=1'b0;
@@ -877,7 +825,7 @@ module main_module_decrypt(
      end
      else  begin
         valid_output<=valid1;
-         plaintext<=block1end;
+         plaintext<=state[10];
          end
          end
 endmodule
