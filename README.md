@@ -56,13 +56,14 @@ Each AES round includes the following steps:
 
 ---
 
-## 🔁 Pipeline Stages
+## 🔁 Pipeline Segments
 
-| Stage | AES Rounds Covered | Registers Used              |
-|-------|---------------------|-----------------------------|
-| 1     | Rounds 0–3          | `round_keys1`, `block1`, `valid1` |
-| 2     | Rounds 4–6          | `round_keys2`, `block2`, `valid2` |
-| 3     | Rounds 7–10         | `round_keys3`, `block3`, `valid3` |
+| Segment | AES Rounds Covered 
+|-------|---------------------|
+| 1     | key expansion and round 0 | 
+| 2     | Rounds 1-3                | 
+| 3     | Rounds 4-6                | 
+| 4     | round 7-10                |
 
 ---
 
